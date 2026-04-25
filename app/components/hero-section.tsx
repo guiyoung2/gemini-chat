@@ -2,7 +2,9 @@
 
 import { motion } from "framer-motion";
 import { Zap, ArrowRight, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 function FloatingOrb({
   className,
@@ -26,22 +28,39 @@ function FloatingOrb({
       <motion.div
         animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
-        className={cn("w-full h-full rounded-full bg-gradient-radial", `bg-gradient-to-br ${color} to-transparent`)}
+        className={cn(
+          "w-full h-full rounded-full bg-gradient-radial",
+          `bg-gradient-to-br ${color} to-transparent`,
+        )}
       />
     </motion.div>
   );
 }
+
+const EASE_CURVE = [0.25, 0.4, 0.25, 1] as const;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, delay: 0.2 + i * 0.15, ease: [0.25, 0.4, 0.25, 1] },
+    transition: {
+      duration: 0.7,
+      delay: 0.2 + i * 0.15,
+      ease: EASE_CURVE,
+    },
   }),
 };
 
 export function HeroSection() {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  // 로그인 여부에 따라 대시보드 or 로그인 페이지로 이동
+  function handleStart() {
+    router.push(user ? "/dashboard" : "/login");
+  }
+
   return (
     <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#080808]">
       {/* 배경 노이즈 그라디언트 */}
@@ -126,7 +145,10 @@ export function HeroSection() {
           animate="visible"
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <button className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-500 active:scale-[0.98]">
+          <button
+            onClick={handleStart}
+            className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-500 active:scale-[0.98]"
+          >
             <Zap className="h-4 w-4" />
             무료로 시작하기
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -154,7 +176,9 @@ export function HeroSection() {
             <pre className="overflow-x-auto text-sm leading-relaxed">
               <code>
                 <span className="text-white/30">{"// "}</span>
-                <span className="text-white/30">{"딱 세 줄로 Gemini 연동 완료"}</span>
+                <span className="text-white/30">
+                  {"딱 세 줄로 Gemini 연동 완료"}
+                </span>
                 {"\n"}
                 <span className="text-violet-400">{"import"}</span>
                 <span className="text-white/70">{" { gemini } "}</span>
@@ -167,11 +191,13 @@ export function HeroSection() {
                 <span className="text-white/70">{" gemini."}</span>
                 <span className="text-yellow-400">{"chat"}</span>
                 <span className="text-white/70">{"("}</span>
-                <span className="text-green-400">{"\"안녕하세요!\""}</span>
+                <span className="text-green-400">{'"안녕하세요!"'}</span>
                 <span className="text-white/70">{")"}</span>
                 {"\n"}
                 <span className="text-white/30">{"// → "}</span>
-                <span className="text-white/50">{"안녕하세요! 무엇을 도와드릴까요?"}</span>
+                <span className="text-white/50">
+                  {"안녕하세요! 무엇을 도와드릴까요?"}
+                </span>
               </code>
             </pre>
           </div>
