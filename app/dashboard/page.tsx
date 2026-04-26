@@ -10,9 +10,10 @@ import {
   Bot,
   ChevronDown,
   LogOut,
-  Coins,
+  Zap,
   Trash2,
   SquarePen,
+  CreditCard,
 } from 'lucide-react'
 import ChatInput from '@/app/components/chat-input'
 import { cn } from '@/lib/utils'
@@ -34,9 +35,16 @@ interface Message {
   timestamp: string
 }
 
-interface CreditInfo {
-  used: number
-  total: number
+interface SubscriptionInfo {
+  plan: 'free' | 'pro' | 'unlimited'
+}
+
+const PLAN_LABELS: Record<string, string> = { free: 'Free', pro: 'Pro', unlimited: 'Unlimited' }
+const PLAN_LIMITS: Record<string, string> = { free: '월 10회', pro: '월 100회', unlimited: '무제한' }
+const PLAN_COLORS: Record<string, string> = {
+  free: 'bg-white/10 text-white/50',
+  pro: 'bg-indigo-600/20 text-indigo-400',
+  unlimited: 'bg-violet-600/20 text-violet-400',
 }
 
 // DB row 타입
@@ -212,7 +220,7 @@ export default function DashboardPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [credits] = useState<CreditInfo>({ used: 0, total: 10000 })
+  const [subscription, setSubscription] = useState<SubscriptionInfo>({ plan: 'free' })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -237,6 +245,20 @@ export default function DashboardPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // 구독 플랜 조회
+  useEffect(() => {
+    if (loading || !user) return
+    void supabase
+      .from('subscriptions')
+      .select('plan')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.plan) setSubscription({ plan: data.plan as SubscriptionInfo['plan'] })
+      })
+  }, [user, loading, supabase])
 
   // 특정 대화의 메시지 불러오기
   const loadMessages = useCallback(async (convId: string) => {
@@ -466,9 +488,7 @@ export default function DashboardPage() {
 
   const GROUP_ORDER = ['오늘', '어제', '이번 주', '지난 주']
 
-  // 크레딧 퍼센트 및 색상
-  const creditPct = Math.round((credits.used / credits.total) * 100)
-  const creditColor = creditPct < 50 ? 'bg-indigo-500' : creditPct < 80 ? 'bg-yellow-500' : 'bg-red-500'
+  const planKey = subscription.plan
 
   // 사용자 이름/이니셜 추출
   const userName = user?.user_metadata?.full_name as string | undefined
@@ -497,23 +517,12 @@ export default function DashboardPage() {
         {/* 우측: 크레딧 + 사용자 */}
         <div className="flex items-center gap-5">
 
-          {/* 크레딧 */}
-          <div className="flex items-center gap-2.5">
-            <Coins className="w-3.5 h-3.5 text-white/30" />
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/50">
-                  {credits.used.toLocaleString()} / {credits.total.toLocaleString()}
-                </span>
-                <span className="text-[10px] text-white/25">크레딧</span>
-              </div>
-              <div className="w-24 h-1 rounded-full bg-white/8 overflow-hidden">
-                <div
-                  className={cn('h-full rounded-full transition-all duration-500', creditColor)}
-                  style={{ width: `${creditPct}%` }}
-                />
-              </div>
-            </div>
+          {/* 플랜 배지 */}
+          <div className="flex items-center gap-2">
+            <span className={cn('text-xs px-2.5 py-1 rounded-full font-medium', PLAN_COLORS[planKey])}>
+              {PLAN_LABELS[planKey]}
+            </span>
+            <span className="text-[11px] text-white/30">{PLAN_LIMITS[planKey]}</span>
           </div>
 
           {/* 구분선 */}
@@ -543,7 +552,15 @@ export default function DashboardPage() {
 
             {/* 드롭다운 */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-[#1A2535] border border-white/8 rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-[#1A2535] border border-white/8 rounded-xl shadow-xl overflow-hidden z-50">
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); router.push('/pricing') }}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/60 hover:text-white hover:bg-white/6 transition-colors"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  플랜 / 요금제
+                </button>
+                <div className="h-px bg-white/6 mx-3" />
                 <button
                   onClick={() => { setIsUserMenuOpen(false); signOut() }}
                   className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/60 hover:text-white hover:bg-white/6 transition-colors"
@@ -614,6 +631,24 @@ export default function DashboardPage() {
               </div>
             )}
           </nav>
+
+          {/* 사이드바 하단: 플랜 + 업그레이드 */}
+          <div className="shrink-0 p-3 border-t border-white/6">
+            {planKey === 'unlimited' ? (
+              <div className="flex items-center gap-2 px-3 py-2">
+                <span className="text-xs text-violet-400 font-medium">Unlimited</span>
+                <span className="text-[10px] text-white/25">무제한 사용 중</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push('/pricing')}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 text-xs font-medium transition-colors"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                업그레이드
+              </button>
+            )}
+          </div>
         </aside>
 
         {/* ===== CHAT AREA ===== */}
