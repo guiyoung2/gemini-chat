@@ -91,8 +91,7 @@ export default function BillingPage() {
         .select('count', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-        .then((r) => r)
-        .catch(() => ({ count: 0 })),
+        .then((r) => r, () => ({ count: 0 })),
     ]).then(([subResult, usageResult]) => {
       if (subResult.data) {
         setSubscription({
