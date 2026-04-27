@@ -17,26 +17,26 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500 text-sm">로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <div className="text-white/40 text-sm">로딩 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-2 text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <div className="bg-[#111111] border border-white/8 p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-2 text-white">
           로그인
         </h1>
-        <p className="text-gray-500 text-center mb-8 text-sm">
+        <p className="text-white/40 text-center mb-8 text-sm">
           계속하려면 구글 계정으로 로그인하세요
         </p>
 
         {/* 구글 로그인 버튼 */}
         <button
           onClick={signInWithGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 px-4 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm"
+          className="w-full flex items-center justify-center gap-3 bg-[#1C1C1C] border border-white/8 rounded-lg py-3 px-4 hover:bg-[#252525] hover:border-white/12 transition-colors font-medium text-white/80 text-sm"
         >
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path
