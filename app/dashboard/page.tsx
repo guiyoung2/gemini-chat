@@ -121,7 +121,7 @@ const ConversationItem = memo(({
       className={cn(
         'group w-full flex items-start gap-2 px-3 py-2.5 rounded-xl text-left transition-all relative pr-10',
         isActive
-          ? 'bg-[#1A2535] border-l-2 border-indigo-500 pl-2.5'
+          ? 'bg-[#1C1C1C] border-l-2 border-indigo-500 pl-2.5'
           : 'hover:bg-white/4 border-l-2 border-transparent'
       )}
     >
@@ -166,7 +166,7 @@ const MessageBubble = memo(({ message }: { message: Message }) => {
             'px-4 py-3 text-sm leading-relaxed',
             isUser
               ? 'bg-indigo-600 text-white rounded-2xl rounded-br-md'
-              : 'bg-[#1A2535] text-white/80 rounded-2xl rounded-bl-md border border-white/6'
+              : 'bg-[#1C1C1C] text-white/80 rounded-2xl rounded-bl-md border border-white/6'
           )}
         >
           {lines.map((line, i) => (
@@ -190,7 +190,7 @@ const TypingIndicator = memo(() => (
     <div className="w-7 h-7 rounded-full bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center shrink-0 mt-1">
       <Bot className="w-3.5 h-3.5 text-indigo-400" />
     </div>
-    <div className="bg-[#1A2535] border border-white/6 px-4 py-3 rounded-2xl rounded-bl-md">
+    <div className="bg-[#1C1C1C] border border-white/6 px-4 py-3 rounded-2xl rounded-bl-md">
       <div className="flex gap-1 items-center h-4">
         {[0, 1, 2].map((i) => (
           <span
@@ -497,7 +497,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A1217]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
         <div className="flex items-center gap-3 text-white/40">
           <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
           <span className="text-sm">로딩 중...</span>
@@ -509,10 +509,10 @@ export default function DashboardPage() {
   if (!user) return null
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A1217] text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#0A0A0A] text-white overflow-hidden">
 
       {/* ===== TOP BAR ===== */}
-      <header className="flex items-center justify-end h-14 px-5 bg-[#0F1923] border-b border-white/6 shrink-0 z-10">
+      <header className="flex items-center justify-end h-14 px-5 bg-[#111111] border-b border-white/6 shrink-0 z-10">
 
         {/* 우측: 크레딧 + 사용자 */}
         <div className="flex items-center gap-5">
@@ -552,7 +552,7 @@ export default function DashboardPage() {
 
             {/* 드롭다운 */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-[#1A2535] border border-white/8 rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-[#1C1C1C] border border-white/8 rounded-xl shadow-xl overflow-hidden z-50">
                 <button
                   onClick={() => { setIsUserMenuOpen(false); router.push('/pricing') }}
                   className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white/60 hover:text-white hover:bg-white/6 transition-colors"
@@ -578,7 +578,7 @@ export default function DashboardPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ===== SIDEBAR ===== */}
-        <aside className="w-60 shrink-0 bg-[#0F1923] border-r border-white/6 flex flex-col overflow-hidden">
+        <aside className="w-60 shrink-0 bg-[#111111] border-r border-white/6 flex flex-col overflow-hidden">
 
           {/* 새 대화 버튼 */}
           <div className="p-3 shrink-0">

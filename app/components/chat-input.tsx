@@ -147,7 +147,7 @@ const OptionsMenu = memo(({ isOpen, onSelect, menuOptions }: OptionsMenuProps) =
   if (!isOpen) return null
 
   return (
-    <div className="absolute bottom-full left-0 mb-2 bg-[#1A2535] border border-white/8 rounded-xl shadow-xl overflow-hidden z-30 min-w-[120px]">
+    <div className="absolute bottom-full left-0 mb-2 bg-[#1C1C1C] border border-white/8 rounded-xl shadow-xl overflow-hidden z-30 min-w-[120px]">
       <ul className="py-1">
         {menuOptions.map((option) => (
           <li
@@ -469,7 +469,7 @@ export default function ChatInput({
           onClick={handleClick}
           className={`relative flex flex-col w-full min-h-full backdrop-blur-xl shadow-lg rounded-2xl p-2 overflow-visible group transition-all`}
           style={{
-            background: `rgba(26, 37, 53, ${bgOpacityValue / 100 + 0.7})`,
+            background: `rgba(20, 20, 20, ${bgOpacityValue / 100 + 0.7})`,
             border: '1px solid rgba(255,255,255,0.06)',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
             transition: `all ${animationDuration}ms ease, box-shadow ${animationDuration}ms ease`,

@@ -30,7 +30,7 @@ export default async function PricingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0A1217] py-20 px-4">
+    <main className="min-h-screen bg-[#0A0A0A] py-20 px-4">
       {/* 대시보드 뒤로가기 버튼 */}
       <div className="max-w-5xl mx-auto mb-8">
         <Link

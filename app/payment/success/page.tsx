@@ -4,7 +4,7 @@ import { CheckCircle } from 'lucide-react'
 // 결제 완료 후 리다이렉트되는 성공 페이지
 export default function PaymentSuccessPage() {
   return (
-    <main className="min-h-screen bg-[#0A1217] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="flex justify-center mb-6">
           <div className="relative">

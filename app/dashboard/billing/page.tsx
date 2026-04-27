@@ -146,7 +146,7 @@ export default function BillingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A1217]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
         <div className="flex items-center gap-3 text-white/40">
           <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
           <span className="text-sm">로딩 중...</span>
@@ -166,9 +166,9 @@ export default function BillingPage() {
   const usagePct = usageLimit ? Math.min((usageCount / usageLimit) * 100, 100) : 0
 
   return (
-    <div className="min-h-screen bg-[#0A1217] text-white">
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* 헤더 */}
-      <header className="sticky top-0 z-10 flex items-center h-14 px-5 bg-[#0F1923] border-b border-white/6">
+      <header className="sticky top-0 z-10 flex items-center h-14 px-5 bg-[#111111] border-b border-white/6">
         <button
           onClick={() => router.push('/dashboard')}
           className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm"
@@ -192,7 +192,7 @@ export default function BillingPage() {
         ) : (
           <div className="space-y-3">
             {/* ── 현재 플랜 카드 ── */}
-            <div className="rounded-2xl bg-[#161F2C] border border-white/6 p-5">
+            <div className="rounded-2xl bg-[#181818] border border-white/6 p-5">
               <p className="text-xs text-white/40 mb-3">현재 플랜</p>
               <div className="flex items-end justify-between">
                 <span className="text-2xl font-bold text-white">{meta.label}</span>
@@ -217,7 +217,7 @@ export default function BillingPage() {
             </div>
 
             {/* ── 이번 달 사용량 카드 ── */}
-            <div className="rounded-2xl bg-[#161F2C] border border-white/6 p-5">
+            <div className="rounded-2xl bg-[#181818] border border-white/6 p-5">
               <p className="text-xs text-white/40 mb-3">이번 달 사용량</p>
 
               <div className="flex items-baseline gap-1 mb-3">
@@ -272,7 +272,7 @@ export default function BillingPage() {
             <div className="flex gap-2.5 pt-1">
               <button
                 onClick={() => router.push('/pricing')}
-                className="flex-1 py-3 rounded-xl bg-white text-[#0A1217] font-semibold text-sm hover:bg-white/90 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-white text-[#0A0A0A] font-semibold text-sm hover:bg-white/90 transition-colors"
               >
                 플랜 변경
               </button>
@@ -297,7 +297,7 @@ export default function BillingPage() {
 
             {/* ── 구독 취소 섹션 ── */}
             {hasPaidPlan && !isCanceled && !cancelSuccess && (
-              <div className="rounded-2xl bg-[#161F2C] border border-white/6 p-5 mt-2">
+              <div className="rounded-2xl bg-[#181818] border border-white/6 p-5 mt-2">
                 <p className="text-sm font-semibold text-white mb-1">구독 취소</p>
                 <p className="text-xs text-white/40 mb-4">
                   취소하면 현재 결제 기간이 끝난 후 Free 플랜으로 전환됩니다.
@@ -335,7 +335,7 @@ export default function BillingPage() {
 
             {/* 이미 취소된 상태 안내 */}
             {isCanceled && !cancelSuccess && (
-              <div className="rounded-2xl bg-[#161F2C] border border-white/6 p-5 mt-2">
+              <div className="rounded-2xl bg-[#181818] border border-white/6 p-5 mt-2">
                 <p className="text-sm font-semibold text-amber-400 mb-1">구독 취소 예정</p>
                 <p className="text-xs text-white/40">
                   {subscription?.current_period_end
