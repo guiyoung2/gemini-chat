@@ -632,8 +632,17 @@ export default function DashboardPage() {
             )}
           </nav>
 
-          {/* 사이드바 하단: 플랜 + 업그레이드 */}
-          <div className="shrink-0 p-3 border-t border-white/6">
+          {/* 사이드바 하단: Billing + 플랜 + 업그레이드 */}
+          <div className="shrink-0 p-3 border-t border-white/6 space-y-1.5">
+            {/* 청구 설정 */}
+            <button
+              onClick={() => router.push('/dashboard/billing')}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/4 text-xs transition-colors"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              청구 설정
+            </button>
+
             {planKey === 'unlimited' ? (
               <div className="flex items-center gap-2 px-3 py-2">
                 <span className="text-xs text-violet-400 font-medium">Unlimited</span>

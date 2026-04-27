@@ -78,7 +78,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 9.99,
+    price: 9900,
     queries: '월 100회',
     description: '개인 생산성을 높이는 플랜',
     features: ['AI 쿼리 100회/월', '모든 기본 기능', '이메일 지원', '빠른 응답'],
@@ -88,7 +88,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'unlimited',
     name: 'Unlimited',
-    price: 29.99,
+    price: 29900,
     queries: '무제한',
     description: '팀 또는 헤비 유저 플랜',
     features: ['AI 쿼리 무제한', '모든 Pro 기능', '우선순위 지원', 'API 접근'],
@@ -227,7 +227,7 @@ export default function PricingCards({
                 ) : (
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold text-white">
-                      ${plan.price}
+                      ₩{plan.price.toLocaleString('ko-KR')}
                     </span>
                     <span className="text-white/40 text-sm">/월</span>
                   </div>
