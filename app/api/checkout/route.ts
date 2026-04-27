@@ -33,9 +33,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
+    const host = req.headers.get('host') ?? 'localhost:3000'
+    const protocol = host.startsWith('localhost') ? 'http' : 'https'
+    const origin = `${protocol}://${host}`
+
     const checkout = await polar.checkouts.create({
       products: [productId],
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
+      successUrl: `${origin}/payment/success`,
       customerEmail: user.email,
       externalCustomerId: user.id,
     })
