@@ -1,5 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { encrypt } from "@/lib/encryption";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -7,6 +10,80 @@ interface ChatMessage {
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+
+// 플랜별 월 사용량 한도 (null = 무제한)
+const PLAN_LIMITS: Record<string, number | null> = {
+  free: 10,
+  pro: 100,
+  unlimited: null,
+}
+
+// 이번 달 1일 ISO 문자열
+function monthStart(): string {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+}
+
+// 요청 IP 추출 (프록시 헤더 우선)
+function extractIp(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown"
+  )
+}
+
+// 사용량 한도 체크 → 통과하면 usage INSERT, 초과하면 false 반환
+async function checkAndRecordUsage(userId: string): Promise<{ allowed: boolean; plan: string }> {
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  // 활성 구독 플랜 조회 (없으면 free)
+  const { data: sub } = await admin
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle()
+
+  const plan: string = sub?.plan ?? "free"
+  const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free
+
+  // 한도가 있는 플랜만 사용량 체크
+  if (limit !== null) {
+    const { count } = await admin
+      .from("usage")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", monthStart())
+
+    if ((count ?? 0) >= limit) {
+      return { allowed: false, plan }
+    }
+  }
+
+  // 사용량 기록
+  await admin.from("usage").insert({ user_id: userId })
+
+  return { allowed: true, plan }
+}
+
+// IP 주소를 user_activity_logs에 비동기 기록 (실패해도 무시)
+async function logActivity(userId: string, ip: string): Promise<void> {
+  try {
+    const supabase = await createClient()
+    await supabase.from("user_activity_logs").insert({
+      user_id: userId,
+      ip_address: encrypt(ip),
+      event_type: "chat",
+    })
+  } catch {
+    // 로그 실패는 채팅 응답에 영향 없음
+  }
+}
 
 // Gemini 스트리밍 채팅 API (히스토리 + 날짜 시스템 프롬프트 포함)
 export async function POST(request: NextRequest) {
@@ -19,6 +96,26 @@ export async function POST(request: NextRequest) {
     if (!message?.trim()) {
       return new Response("메시지가 비어있습니다.", { status: 400 });
     }
+
+    // 인증 확인
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return new Response("로그인이 필요합니다.", { status: 401 })
+    }
+
+    // 사용량 한도 체크 및 기록
+    const { allowed, plan } = await checkAndRecordUsage(user.id)
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "usage_limit_exceeded", plan }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      )
+    }
+
+    // IP 비동기 로깅 (채팅 응답에 영향 없음)
+    void logActivity(user.id, extractIp(request))
 
     const today = new Date().toLocaleDateString("ko-KR", {
       year: "numeric",

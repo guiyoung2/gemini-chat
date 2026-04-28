@@ -382,6 +382,22 @@ export default function DashboardPage() {
         body: JSON.stringify({ message: text, history }),
       })
 
+      if (response.status === 429) {
+        const body = await response.json().catch(() => ({})) as { plan?: string }
+        const planLabel = body.plan === 'pro' ? 'Pro' : 'Free'
+        setIsTyping(false)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `limit-${Date.now()}`,
+            role: 'assistant',
+            content: `이번 달 ${planLabel} 플랜 사용량 한도에 도달했습니다. 플랜을 업그레이드하면 더 많이 사용할 수 있어요.`,
+            timestamp: getNow(),
+          },
+        ])
+        return
+      }
+
       if (!response.ok) throw new Error('API 요청 실패')
 
       const reader = response.body!.getReader()
