@@ -4,10 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 const protectedRoutes = ['/dashboard']
 const authRoutes = ['/login']
 
-// 라우트 보호 - 미인증 시 /login, 인증 후 /login 접근 시 /dashboard로 리다이렉트
+// 세션 쿠키 갱신 + 라우트 보호
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const response = NextResponse.next({ request })
+
+  // 세션 쿠키를 response에 올바르게 전파하기 위해 supabaseResponse 사용
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,14 +23,16 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           )
         },
       },
     }
   )
 
+  // 세션 갱신 (쿠키에 최신 토큰 기록)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -44,9 +48,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',],
 }
