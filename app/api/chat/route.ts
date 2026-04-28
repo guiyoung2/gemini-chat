@@ -18,10 +18,10 @@ const PLAN_LIMITS: Record<string, number | null> = {
   unlimited: null,
 }
 
-// 이번 달 1일 ISO 문자열
-function monthStart(): string {
+// 현재 월 문자열 (YYYY-MM 형식)
+function currentMonth(): string {
   const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
 // 요청 IP 추출 (프록시 헤더 우선)
@@ -33,7 +33,7 @@ function extractIp(request: NextRequest): string {
   )
 }
 
-// 사용량 한도 체크 → 통과하면 usage INSERT, 초과하면 false 반환
+// 사용량 한도 체크 → 통과하면 usage upsert(count+1), 초과하면 false 반환
 async function checkAndRecordUsage(userId: string): Promise<{ allowed: boolean; plan: string }> {
   const admin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,22 +51,32 @@ async function checkAndRecordUsage(userId: string): Promise<{ allowed: boolean; 
 
   const plan: string = sub?.plan ?? "free"
   const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free
+  const month = currentMonth()
+
+  // 현재 월 사용량 행 조회
+  const { data: usageRow } = await admin
+    .from("usage")
+    .select("id, count")
+    .eq("user_id", userId)
+    .eq("month", month)
+    .maybeSingle()
+
+  const currentCount = usageRow?.count ?? 0
 
   // 한도가 있는 플랜만 사용량 체크
-  if (limit !== null) {
-    const { count } = await admin
-      .from("usage")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .gte("created_at", monthStart())
-
-    if ((count ?? 0) >= limit) {
-      return { allowed: false, plan }
-    }
+  if (limit !== null && currentCount >= limit) {
+    return { allowed: false, plan }
   }
 
-  // 사용량 기록
-  await admin.from("usage").insert({ user_id: userId })
+  // 사용량 기록: 행 있으면 count+1, 없으면 새 행 삽입
+  if (usageRow) {
+    await admin
+      .from("usage")
+      .update({ count: currentCount + 1, updated_at: new Date().toISOString() })
+      .eq("id", usageRow.id)
+  } else {
+    await admin.from("usage").insert({ user_id: userId, month, count: 1 })
+  }
 
   return { allowed: true, plan }
 }
