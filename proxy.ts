@@ -4,12 +4,15 @@ import { NextResponse, type NextRequest } from 'next/server'
 const protectedRoutes = ['/dashboard']
 const authRoutes = ['/login']
 
-// 세션 쿠키 갱신 + 라우트 보호
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+function needsAuth(pathname: string) {
+  return (
+    protectedRoutes.some((r) => pathname.startsWith(r)) ||
+    authRoutes.includes(pathname)
+  )
+}
 
-  // 세션 쿠키를 response에 올바르게 전파하기 위해 supabaseResponse 사용
-  let supabaseResponse = NextResponse.next({ request })
+function createSupabaseClient(request: NextRequest, response: NextResponse) {
+  let supabaseResponse = response
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,23 +35,34 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // 세션 갱신 (쿠키에 최신 토큰 기록)
+  return { supabase, getResponse: () => supabaseResponse }
+}
+
+// 인증이 필요한 라우트에서만 Supabase 세션 검증
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // 인증 불필요한 페이지는 Supabase 호출 없이 즉시 통과
+  if (!needsAuth(pathname)) {
+    return NextResponse.next({ request })
+  }
+
+  const response = NextResponse.next({ request })
+  const { supabase, getResponse } = createSupabaseClient(request, response)
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isProtectedRoute = protectedRoutes.some((r) => pathname.startsWith(r))
-  const isAuthRoute = authRoutes.includes(pathname)
-
-  if (isProtectedRoute && !user) {
+  if (protectedRoutes.some((r) => pathname.startsWith(r)) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (isAuthRoute && user) {
+  if (authRoutes.includes(pathname) && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  return supabaseResponse
+  return getResponse()
 }
 
 export const config = {
