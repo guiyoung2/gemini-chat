@@ -468,12 +468,18 @@ export default function DashboardPage() {
           // 한도 초과 시 카운트를 최대값으로 고정
           const max = PLAN_MAX[subscription.plan];
           if (max !== null) setUsageCount(max);
+          const limitContent = `이번 달 ${planLabel} 플랜 사용량 한도에 도달했습니다. 플랜을 업그레이드하면 더 많이 사용할 수 있어요.`;
+          const { data: savedLimitMsg } = await supabase
+            .from("messages")
+            .insert({ conversation_id: convId, role: "assistant", content: limitContent })
+            .select()
+            .single();
           setMessages((prev) => [
             ...prev,
             {
-              id: `limit-${Date.now()}`,
+              id: (savedLimitMsg as MessageRow | null)?.id ?? `limit-${Date.now()}`,
               role: "assistant",
-              content: `이번 달 ${planLabel} 플랜 사용량 한도에 도달했습니다. 플랜을 업그레이드하면 더 많이 사용할 수 있어요.`,
+              content: limitContent,
               timestamp: getNow(),
             },
           ]);
@@ -556,12 +562,18 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("채팅 오류:", error);
         setIsTyping(false);
+        const errorContent = "오류가 발생했습니다. 다시 시도해주세요.";
+        const { data: savedErrMsg } = await supabase
+          .from("messages")
+          .insert({ conversation_id: convId, role: "assistant", content: errorContent })
+          .select()
+          .single();
         setMessages((prev) => [
           ...prev,
           {
-            id: `err-${Date.now()}`,
+            id: (savedErrMsg as MessageRow | null)?.id ?? `err-${Date.now()}`,
             role: "assistant",
-            content: "오류가 발생했습니다. 다시 시도해주세요.",
+            content: errorContent,
             timestamp: getNow(),
           },
         ]);

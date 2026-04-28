@@ -33,8 +33,14 @@ function extractIp(request: NextRequest): string {
   )
 }
 
-// 사용량 한도 체크 → 통과하면 usage upsert(count+1), 초과하면 false 반환
-async function checkAndRecordUsage(userId: string): Promise<{ allowed: boolean; plan: string }> {
+interface UsageResult {
+  allowed: boolean
+  plan: string
+  record: () => Promise<void>
+}
+
+// 사용량 한도 체크만 수행, 기록은 Gemini 성공 후 호출할 record() 반환
+async function checkUsage(userId: string): Promise<UsageResult> {
   const admin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SECRET_KEY!,
@@ -63,22 +69,26 @@ async function checkAndRecordUsage(userId: string): Promise<{ allowed: boolean; 
 
   const currentCount = usageRow?.count ?? 0
 
-  // 한도가 있는 플랜만 사용량 체크
+  // 한도 초과 시 빈 record() 반환
   if (limit !== null && currentCount >= limit) {
-    return { allowed: false, plan }
+    return { allowed: false, plan, record: async () => {} }
   }
 
-  // 사용량 기록: 행 있으면 count+1, 없으면 새 행 삽입
-  if (usageRow) {
-    await admin
-      .from("usage")
-      .update({ count: currentCount + 1, updated_at: new Date().toISOString() })
-      .eq("id", usageRow.id)
-  } else {
-    await admin.from("usage").insert({ user_id: userId, month, count: 1 })
+  // Gemini 성공 후 호출할 기록 함수 (실패 시 미호출 → 카운트 안 올라감)
+  return {
+    allowed: true,
+    plan,
+    record: async () => {
+      if (usageRow) {
+        await admin
+          .from("usage")
+          .update({ count: currentCount + 1, updated_at: new Date().toISOString() })
+          .eq("id", usageRow.id)
+      } else {
+        await admin.from("usage").insert({ user_id: userId, month, count: 1 })
+      }
+    },
   }
-
-  return { allowed: true, plan }
 }
 
 // IP 주소를 user_activity_logs에 비동기 기록 (실패해도 무시)
@@ -115,8 +125,8 @@ export async function POST(request: NextRequest) {
       return new Response("로그인이 필요합니다.", { status: 401 })
     }
 
-    // 사용량 한도 체크 및 기록
-    const { allowed, plan } = await checkAndRecordUsage(user.id)
+    // 사용량 한도 체크 (기록은 Gemini 성공 후)
+    const { allowed, plan, record } = await checkUsage(user.id)
     if (!allowed) {
       return new Response(
         JSON.stringify({ error: "usage_limit_exceeded", plan }),
@@ -146,7 +156,9 @@ export async function POST(request: NextRequest) {
     }));
 
     const chat = model.startChat({ history: geminiHistory });
+    // sendMessageStream 성공 시점에 사용량 기록 (실패하면 record 미호출)
     const result = await chat.sendMessageStream(message);
+    await record();
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
