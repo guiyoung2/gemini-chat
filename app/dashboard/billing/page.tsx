@@ -53,6 +53,12 @@ function formatDate(isoStr: string): string {
   })
 }
 
+// 현재 월 문자열 (YYYY-MM 형식)
+function currentMonth(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
 // ===== MAIN PAGE =====
 
 export default function BillingPage() {
@@ -85,13 +91,12 @@ export default function BillingPage() {
         .select('plan, status, current_period_end')
         .eq('user_id', user.id)
         .maybeSingle(),
-      // usage 테이블이 없으면 0 반환
       supabase
         .from('usage')
-        .select('count', { count: 'exact', head: true })
+        .select('count')
         .eq('user_id', user.id)
-        .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-        .then((r) => r, () => ({ count: 0 })),
+        .eq('month', currentMonth())
+        .maybeSingle(),
     ]).then(([subResult, usageResult]) => {
       if (subResult.data) {
         setSubscription({
@@ -100,11 +105,7 @@ export default function BillingPage() {
           current_period_end: subResult.data.current_period_end as string | null,
         })
       }
-      setUsageCount(
-        typeof (usageResult as { count: number | null }).count === 'number'
-          ? ((usageResult as { count: number | null }).count ?? 0)
-          : 0,
-      )
+      setUsageCount((usageResult.data as { count: number } | null)?.count ?? 0)
       setIsLoadingSub(false)
     })
   }, [user, loading, supabase])
