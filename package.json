@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lighthouse": "lhci collect && node scripts/lighthouse-report.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -22,6 +23,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
