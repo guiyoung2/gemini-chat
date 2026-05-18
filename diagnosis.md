@@ -53,3 +53,68 @@
 | **P6** | README §1 암호화 설명 보강 (IP 외 이메일·이름도 암호화 사실 추가) | ① 주장 사실화 (과소주장 → 정확히) | 낮음 — 실제보다 적게 주장하는 항목 수정, 이력서 근거 강화 | `app/auth/callback/route.ts:52–55` |
 | **P7** | `record()` 호출 타이밍 검토 — 스트림 소비 완료 후 기록 방식으로 전환 가능 여부 | ② 측정 가능한 개선 | 낮음 — 현재도 대부분의 실패 케이스에서 보호됨. 트레이드오프: 스트림 소비 후 record는 응답 지연 없이 비동기 처리 필요 | `app/api/chat/route.ts:161` |
 | **P8** | `framer-motion` 제거 → CSS animation 대체 (번들 ~150KB 절감) | ② 측정 가능한 개선 | 중간 — Core Web Vitals(LCP, INP) 개선 가능. 단, 기존 Orb 무한 루프 애니메이션을 CSS로 재구현 필요 | `app/components/hero-section.tsx:3`, `app/components/pricing-card.tsx:3` |
+
+---
+
+## 4. 측정 베이스라인 (before)
+
+> 측정 일시: 2026-05-19 / `npm run build` (Next.js 16.2.4, Turbopack)
+> **주의:** Next.js 16은 Turbopack을 기본 번들러로 사용하며, webpack 시대의 "라우트별 First Load JS" 표를 출력하지 않는다. 아래는 `.next/` 산출물을 직접 측정한 값이다.
+
+### 빌드 결과
+
+**빌드 성공** ✅ (컴파일 2.6s, TypeScript 체크 통과)
+
+경고: `metadataBase` 미설정 — social OG/Twitter 이미지 URL이 `http://localhost:3000` 기준으로 해석됨
+
+### 라우트 목록
+
+| Route | 유형 |
+|-------|------|
+| `/` | ○ Static |
+| `/_not-found` | ○ Static |
+| `/api/billing/cancel` | ƒ Dynamic |
+| `/api/billing/portal` | ƒ Dynamic |
+| `/api/chat` | ƒ Dynamic |
+| `/api/checkout` | ƒ Dynamic |
+| `/api/webhooks/polar` | ƒ Dynamic |
+| `/auth/callback` | ƒ Dynamic |
+| `/dashboard` | ○ Static |
+| `/dashboard/billing` | ○ Static |
+| `/icon.png` | ○ Static |
+| `/login` | ○ Static |
+| `/payment/success` | ○ Static |
+| `/pricing` | ƒ Dynamic |
+
+(ƒ Proxy: Middleware 적용)
+
+### 빌드 산출물 크기
+
+| 항목 | 크기 |
+|------|------|
+| `.next/static/chunks/` (JS 17개) | **1,041 KB** |
+| `.next/static/` CSS (1개) | **52 KB** |
+| `.next/static/` 전체 | **2.1 MB** |
+| `.next/server/` (SSR 번들) | **27 MB** |
+| `.next/build/` | **847 KB** |
+| `.next/dev/` (개발 서버 캐시 — 비프로덕션) | 695 MB |
+
+**상위 5개 JS 청크 (미압축):**
+
+| 파일 | 크기 |
+|------|------|
+| `107ftcfsijbo3.js` | 224 KB |
+| `0n~dq4kpx9xxx.js` | 223 KB |
+| `0wlo_fhr3g5u..js` | 138 KB |
+| `0flkx-jm-4e.k.js` | 118 KB |
+| `03~yq9q893hmn.js` | 110 KB |
+
+> 청크명은 Turbopack 해시로 자동 생성되며 특정 라우트와 1:1 매핑되지 않는다. 상위 2개 청크(224KB, 223KB)가 전체 JS의 ~44%를 차지하며, `framer-motion` 관련 번들이 포함된 것으로 추정된다(P8 우선순위 항목).
+
+### 기타 베이스라인
+
+| 항목 | 값 |
+|------|-----|
+| 테스트 커버리지 | **0%** (테스트 파일 없음) |
+| CI | **없음** |
+| Lighthouse | **미측정** — `measure` phase의 Lighthouse step에서 측정 예정 |
