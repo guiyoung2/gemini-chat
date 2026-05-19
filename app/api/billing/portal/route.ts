@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Polar } from '@polar-sh/sdk'
 
 const polar = new Polar({
-  accessToken: process.env.POLAR_API_TOKEN!,
+  accessToken: process.env.POLAR_ACCESS_TOKEN!,
   server: (process.env.POLAR_SERVER as 'sandbox' | 'production') ?? 'production',
 })
 
