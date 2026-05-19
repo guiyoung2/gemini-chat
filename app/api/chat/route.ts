@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { encrypt } from "@/lib/encryption";
+import { checkUsage } from "@/lib/usage";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -11,19 +11,6 @@ interface ChatMessage {
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
-// 플랜별 월 사용량 한도 (null = 무제한)
-const PLAN_LIMITS: Record<string, number | null> = {
-  free: 10,
-  pro: 100,
-  unlimited: null,
-}
-
-// 현재 월 문자열 (YYYY-MM 형식)
-function currentMonth(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
 // 요청 IP 추출 (프록시 헤더 우선)
 function extractIp(request: NextRequest): string {
   return (
@@ -31,64 +18,6 @@ function extractIp(request: NextRequest): string {
     request.headers.get("x-real-ip") ??
     "unknown"
   )
-}
-
-interface UsageResult {
-  allowed: boolean
-  plan: string
-  record: () => Promise<void>
-}
-
-// 사용량 한도 체크만 수행, 기록은 Gemini 성공 후 호출할 record() 반환
-async function checkUsage(userId: string): Promise<UsageResult> {
-  const admin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
-  // 활성 구독 플랜 조회 (없으면 free)
-  const { data: sub } = await admin
-    .from("subscriptions")
-    .select("plan")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .maybeSingle()
-
-  const plan: string = sub?.plan ?? "free"
-  const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free
-  const month = currentMonth()
-
-  // 현재 월 사용량 행 조회
-  const { data: usageRow } = await admin
-    .from("usage")
-    .select("id, count")
-    .eq("user_id", userId)
-    .eq("month", month)
-    .maybeSingle()
-
-  const currentCount = usageRow?.count ?? 0
-
-  // 한도 초과 시 빈 record() 반환
-  if (limit !== null && currentCount >= limit) {
-    return { allowed: false, plan, record: async () => {} }
-  }
-
-  // Gemini 성공 후 호출할 기록 함수 (실패 시 미호출 → 카운트 안 올라감)
-  return {
-    allowed: true,
-    plan,
-    record: async () => {
-      if (usageRow) {
-        await admin
-          .from("usage")
-          .update({ count: currentCount + 1, updated_at: new Date().toISOString() })
-          .eq("id", usageRow.id)
-      } else {
-        await admin.from("usage").insert({ user_id: userId, month, count: 1 })
-      }
-    },
-  }
 }
 
 // IP 주소를 user_activity_logs에 비동기 기록 (실패해도 무시)
