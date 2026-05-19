@@ -29,14 +29,23 @@
 | **권한 모델**       | Supabase RLS로 사용자별 데이터 격리, Webhook은 서비스 롤로 우회 처리    |
 | **멀티턴 컨텍스트** | Gemini `history` 파라미터로 이전 대화 흐름 유지                         |
 
-> Lighthouse / Core Web Vitals 실측 수치는 측정 후 채워질 자리입니다.
->
-> | 지표        | 값          |
-> | ----------- | ----------- |
-> | Performance | _측정 예정_ |
-> | LCP         | _측정 예정_ |
-> | INP         | _측정 예정_ |
-> | CLS         | _측정 예정_ |
+**Lighthouse (Mobile, 3회 중앙값 · 2026-05-19)**
+
+| 페이지 | Performance | Accessibility | Best Practices | SEO | LCP | TBT | CLS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` | 98 | 100 | 100 | 100 | 2,263 ms | 9 ms | 0.000 |
+| `/pricing` | 98 | 96 | 100 | 100 | 2,275 ms | 17 ms | 0.000 |
+| `/dashboard` | 99 | 92 | 100 | 100 | 2,100 ms | 30 ms | 0.000 |
+| `/dashboard/billing` | 94 | 95 | 100 | 100 | 3,000 ms | 40 ms | 0.000 |
+
+**현재 품질 수치**
+
+| 항목 | 값 |
+| --- | --- |
+| 테스트 케이스 | 34개 (전부 통과) |
+| 커버리지 (Statements) | 24.19% (166 / 686) |
+| First Load JS (미압축) | ~1,041 KB |
+| CI | GitHub Actions (`.github/workflows/ci.yml`) |
 
 ---
 
@@ -47,10 +56,10 @@
 | 기술                        | 사용 이유                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------ |
 | **Next.js 16** (App Router) | RSC + API Routes로 별도 서버 없이 풀스택 구현. 결제 콜백·Webhook 핸들링 일원화 |
-| **React 19**                | Concurrent 렌더링, `use()` 등 최신 패턴 적용                                   |
+| **React 19**                | 표준 hooks(`useState`/`useEffect`) 기반 구현. React 19 런타임 환경              |
 | **TypeScript**              | 결제·Webhook·DB 스키마처럼 형이 깨지면 위험한 영역 보호                        |
 | **Tailwind CSS 4**          | 다크 테마 일관성·반응형 빠르게 구현                                            |
-| **Framer Motion**           | 랜딩 히어로·진입 애니메이션                                                    |
+| **Framer Motion**           | 랜딩 히어로·플랜 카드 애니메이션. 미압축 ~150 KB 번들 비용                     |
 | **Lucide React**            | 일관된 아이콘 시스템                                                           |
 
 ### Backend & Infra
@@ -87,7 +96,7 @@
 | Unlimited | 무제한    | ₩29,900 |
 
 - **Polar Checkout** — 결제 페이지 리다이렉트 방식
-- **Webhook 처리** — `subscription.active` / `cancelled` / `revoked` 이벤트로 DB 구독 상태 자동 동기화
+- **Webhook 처리** — `subscription.active` / `subscription.canceled` / `subscription.revoked` 이벤트로 DB 구독 상태 자동 동기화
 - **Polar Customer Portal** — 결제 수단 변경·청구서 확인 외부 위임
 - **구독 취소** — 확인 모달 + 기간 만료 후 Free 자동 전환
 
@@ -163,6 +172,24 @@ Supabase 클라이언트를 두 종류로 분리:
 
 **결과**
 사용자 데이터는 RLS로 보호, 시스템 작업은 RLS 우회. 보안과 운영 양립.
+
+### 4-5. 비즈니스 로직이 Route Handler에 인라인으로 묻히는 문제
+
+**문제**
+`checkUsage()` 함수와 `supabaseAdmin` 생성 코드가 `app/api/chat/route.ts`에 인라인으로 정의되어 있었습니다. 로직을 테스트하려면 Next.js Route Handler 전체를 마운트해야 했고, 서비스롤 클라이언트는 3개 Route Handler에서 각각 중복 생성됐습니다.
+
+**해결**
+`lib/usage.ts`에 `checkUsage()` 분리, `lib/supabase/service.ts`에 `supabaseAdmin` 싱글턴 중앙화.
+
+```
+lib/
+├── usage.ts        — checkUsage() : 플랜 한도 체크 + record() 반환
+└── supabase/
+    └── service.ts  — supabaseAdmin : 서비스롤 클라이언트 단일 인스턴스
+```
+
+**결과**
+`checkUsage()`를 순수 모듈로 단위 테스트 가능. Route Handler 3개의 중복 클라이언트 생성 코드 제거.
 
 ---
 

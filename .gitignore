@@ -59,3 +59,6 @@ lighthouserc.generated.json
 
 # bundle analyzer output
 .next/analyze/
+
+# 이력서 초안 (개인 문서 — 커밋 제외)
+resume-geminichat-draft.md

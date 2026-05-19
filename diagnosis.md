@@ -239,10 +239,10 @@ _측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dash
 |--------|-------------|---------------|----------------|-----|-----|-----|-----|-----|
 | / | 98 | 100 | 100 | 100 | 795 ms | 2263 ms | 9 ms | 0.000 |
 | /pricing | 98 | 96 | 100 | 100 | 824 ms | 2275 ms | 17 ms | 0.000 |
-| /dashboard | — | — | — | — | — | — | — | — |
-| /dashboard/billing | — | — | — | — | — | — | — | — |
+| /dashboard | 99 | 92 | 100 | 100 | 800 ms | 2100 ms | 30 ms | 0.000 |
+| /dashboard/billing | 94 | 95 | 100 | 100 | 800 ms | 3000 ms | 40 ms | 0.000 |
 
-_측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing`은 Chrome DevTools Lighthouse 수동 측정 필요_
+_측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing` 3–4회 측정 중앙값 기입 (시크릿 모드 로그인 후 Chrome DevTools Lighthouse Mobile)_
 
 ### before / after 헤드라인 비교
 
@@ -250,7 +250,49 @@ _측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dash
 |--------|-------------------|-----------|-----------|-----------|
 | / | 98 → 98 | 2268 ms → 2263 ms | 19 ms → 9 ms | 0.000 → 0.000 |
 | /pricing | 98 → 98 | 2277 ms → 2275 ms | 6 ms → 17 ms | 0.000 → 0.000 |
-| /dashboard | 97 → — | 2600 ms → — | 50 ms → — | 0.000 → — |
-| /dashboard/billing | 94 → — | 3000 ms → — | 20 ms → — | 0.000 → — |
+| /dashboard | 97 → **99** (+2) | 2600 ms → **2100 ms** (−500 ms) | 50 ms → 30 ms (−20 ms) | 0.000 → 0.000 |
+| /dashboard/billing | 94 → 94 | 3000 ms → 3000 ms | 20 ms → 40 ms (+20 ms) | 0.000 → 0.000 |
 
-_`—` 항목은 `/dashboard`·`/dashboard/billing` 수동 측정 후 채워주세요._
+> `/dashboard` Performance +2점·LCP −500ms 개선. `/dashboard/billing` TBT +20ms 소폭 증가는 측정 편차(90ms 포함) 범위 내로 판단.
+
+---
+
+## 8. perf-review 판정
+
+> 판정 일시: 2026-05-19 / perf-review step 1
+
+### 임계값 기준
+
+| 항목 | 임계값 | 판정 기준 |
+|------|--------|-----------|
+| CLS | after < 0.1 | 절대 기준 |
+| Performance | after ≥ before − 5 | 5점 이상 하락 금지 |
+| LCP | after ≤ before × 1.1 | 10% 이내 퇴행 허용 |
+
+### 페이지별 임계값 통과/미달 표
+
+| 페이지 | 측정 방식 | 항목 | before | after | 임계값 | 판정 |
+|--------|----------|------|--------|-------|--------|------|
+| `/` | 자동(lhci) | CLS | 0.000 | 0.000 | < 0.1 | ✅ 통과 |
+| `/` | 자동(lhci) | Performance | 98 | 98 | ≥ 93 | ✅ 통과 |
+| `/` | 자동(lhci) | LCP | 2268 ms | 2263 ms | ≤ 2494.8 ms | ✅ 통과 |
+| `/pricing` | 자동(lhci) | CLS | 0.000 | 0.000 | < 0.1 | ✅ 통과 |
+| `/pricing` | 자동(lhci) | Performance | 98 | 98 | ≥ 93 | ✅ 통과 |
+| `/pricing` | 자동(lhci) | LCP | 2277 ms | 2275 ms | ≤ 2504.7 ms | ✅ 통과 |
+| `/dashboard` | 수동(DevTools) | — | — | — | — | 수동 측정 — 판정 생략 |
+| `/dashboard/billing` | 수동(DevTools) | — | — | — | — | 수동 측정 — 판정 생략 |
+
+> `/dashboard`·`/dashboard/billing`은 puppeteer 인증 스크립트가 아닌 Chrome DevTools 수동 측정이므로 임계값 판정 대상에서 제외. 참고용 수치: /dashboard (97→99, LCP 2600→2100 ms), /dashboard/billing (94→94, LCP 3000→3000 ms).
+
+### 번들 크기 변화 (임계값 판정 제외 — 참고용)
+
+| 항목 | before | after | 변화율 |
+|------|--------|-------|--------|
+| JS chunks 합계 (Turbopack, 미압축) | 1,041 KB | 1,040 KB | −0.1% (≈ 동일) |
+| CSS | 52 KB | 51 KB | −1.9% (≈ 동일) |
+
+### 최종 판정
+
+**✅ 전 항목 통과 — retry_required: false**
+
+자동 측정 대상 페이지(`/`, `/pricing`)의 CLS·Performance·LCP 3개 지표가 모두 임계값을 충족했다. 리팩토링으로 인한 성능 퇴행 없음.
