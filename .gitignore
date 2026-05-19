@@ -56,3 +56,6 @@ CLAUDE.md
 # lighthouse ci
 .lighthouseci/
 lighthouserc.generated.json
+
+# bundle analyzer output
+.next/analyze/

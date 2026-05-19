@@ -58,12 +58,12 @@
 
 ## 4. 측정 베이스라인 (before)
 
-> 측정 일시: 2026-05-19 / `npm run build` (Next.js 16.2.4, Turbopack)
-> **주의:** Next.js 16은 Turbopack을 기본 번들러로 사용하며, webpack 시대의 "라우트별 First Load JS" 표를 출력하지 않는다. 아래는 `.next/` 산출물을 직접 측정한 값이다.
+> 측정 일시: 2026-05-19 / `npm run build` (Next.js 16.2.4)
+> **주의:** Next.js 16 기본 번들러는 Turbopack이며, `@next/bundle-analyzer`는 Turbopack 미지원. 번들 분석은 `ANALYZE=true npm run build -- --webpack` (webpack 모드)으로 실행.
 
 ### 빌드 결과
 
-**빌드 성공** ✅ (컴파일 2.6s, TypeScript 체크 통과)
+**빌드 성공** ✅ (Turbopack: 컴파일 2.2s / webpack: 컴파일 10.0s, TypeScript 체크 통과)
 
 경고: `metadataBase` 미설정 — social OG/Twitter 이미지 URL이 `http://localhost:3000` 기준으로 해석됨
 
@@ -90,14 +90,14 @@
 
 ### 빌드 산출물 크기
 
+#### Turbopack 모드 (`npm run build`)
+
 | 항목 | 크기 |
 |------|------|
 | `.next/static/chunks/` (JS 17개) | **1,041 KB** |
 | `.next/static/` CSS (1개) | **52 KB** |
 | `.next/static/` 전체 | **2.1 MB** |
 | `.next/server/` (SSR 번들) | **27 MB** |
-| `.next/build/` | **847 KB** |
-| `.next/dev/` (개발 서버 캐시 — 비프로덕션) | 695 MB |
 
 **상위 5개 JS 청크 (미압축):**
 
@@ -109,13 +109,37 @@
 | `0flkx-jm-4e.k.js` | 118 KB |
 | `03~yq9q893hmn.js` | 110 KB |
 
-> 청크명은 Turbopack 해시로 자동 생성되며 특정 라우트와 1:1 매핑되지 않는다. 상위 2개 청크(224KB, 223KB)가 전체 JS의 ~44%를 차지하며, `framer-motion` 관련 번들이 포함된 것으로 추정된다(P8 우선순위 항목).
+#### webpack 모드 (`ANALYZE=true npm run build -- --webpack`) — 번들 분석 기준선
+
+| 항목 | 크기 |
+|------|------|
+| `.next/static/chunks/` (JS 14개) | **1.4 MB** |
+| `.next/static/` CSS (1개) | **50 KB** |
+| `.next/static/` 전체 | **1.4 MB** |
+| `.next/server/` (SSR 번들) | **5.5 MB** |
+
+**상위 7개 JS 청크 (webpack, 미압축):**
+
+| 파일 | 크기 | 추정 내용 |
+|------|------|-----------|
+| `794-...js` | **221 KB** | framer-motion 포함 (P8 제거 대상) |
+| `4bd1b696-...js` | **200 KB** | 공유 vendor chunk |
+| `framework-...js` | **190 KB** | React / ReactDOM |
+| `536-...js` | **177 KB** | 공유 vendor chunk |
+| `main-...js` | **131 KB** | 앱 진입점 |
+| `435-...js` | **120 KB** | 공유 vendor chunk |
+| `polyfills-...js` | **113 KB** | 브라우저 폴리필 |
+
+> `@next/bundle-analyzer`가 생성한 상세 리포트: `.next/analyze/client.html` (커밋 제외, `.gitignore` 등록됨).  
+> 상위 4개 vendor 청크(221+200+177+120 KB = 718 KB)가 전체 JS의 ~51%를 차지. `framer-motion`은 `794-...js`에 포함된 것으로 분석됨.
 
 ### 기타 베이스라인
 
 | 항목 | 값 |
 |------|-----|
-| 테스트 커버리지 | **0%** (테스트 파일 없음) |
+| 테스트 파일 수 | **5개** (chat-input, hero-section, pricing-card, encryption, utils) |
+| 테스트 케이스 수 | **34개** (all passing) |
+| 테스트 커버리지 | 미측정 (`@vitest/coverage-v8` 미설치) |
 | CI | **있음** (`.github/workflows/ci.yml`) |
 | Lighthouse | **측정 완료** — 아래 §5 참조 |
 
