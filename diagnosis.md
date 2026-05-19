@@ -228,3 +228,29 @@ _측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dash
 > ¹ before 단계에서 `@vitest/coverage-v8` 미설치로 커버리지 미측정 — 수치상 0%로 기입.
 
 **헤드라인:** 번들 크기 변화는 드라마틱하지 않다(서버 로직 파일 추출은 클라이언트 번들에 영향 없음). 이번 사이클의 핵심 성과는 **커버리지 0% → 24.19%** 달성과 측정 인프라(`@vitest/coverage-v8`) 구축이다.
+
+---
+
+## 7. Lighthouse 측정 결과 (after)
+
+> 측정 방식: 공개 페이지(`/`, `/pricing`) — `@lhci/cli` 헤드리스 Chrome Mobile 모드 3회 중앙값 / 인증 페이지(`/dashboard`, `/dashboard/billing`) — 수동 측정 대기 중
+
+| 페이지 | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS |
+|--------|-------------|---------------|----------------|-----|-----|-----|-----|-----|
+| / | 98 | 100 | 100 | 100 | 795 ms | 2263 ms | 9 ms | 0.000 |
+| /pricing | 98 | 96 | 100 | 100 | 824 ms | 2275 ms | 17 ms | 0.000 |
+| /dashboard | — | — | — | — | — | — | — | — |
+| /dashboard/billing | — | — | — | — | — | — | — | — |
+
+_측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing`은 Chrome DevTools Lighthouse 수동 측정 필요_
+
+### before / after 헤드라인 비교
+
+| 페이지 | Performance (b→a) | LCP (b→a) | TBT (b→a) | CLS (b→a) |
+|--------|-------------------|-----------|-----------|-----------|
+| / | 98 → 98 | 2268 ms → 2263 ms | 19 ms → 9 ms | 0.000 → 0.000 |
+| /pricing | 98 → 98 | 2277 ms → 2275 ms | 6 ms → 17 ms | 0.000 → 0.000 |
+| /dashboard | 97 → — | 2600 ms → — | 50 ms → — | 0.000 → — |
+| /dashboard/billing | 94 → — | 3000 ms → — | 20 ms → — | 0.000 → — |
+
+_`—` 항목은 `/dashboard`·`/dashboard/billing` 수동 측정 후 채워주세요._
