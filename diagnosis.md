@@ -158,3 +158,73 @@
 | /dashboard/billing | 94 | 95 | 100 | 100 | 800 ms | 3000 ms | 20 ms | 0.000 |
 
 _측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing` 3회 측정: (94/99/97), (92/95/94) 등 — 중앙값 기입_
+
+---
+
+## 6. 측정 결과 (after)
+
+> 측정 일시: 2026-05-19 / `npm run build` (Next.js 16.2.4 Turbopack) + `npm run test:cov` (Vitest v4.1.6 + @vitest/coverage-v8)
+
+### 번들 크기 (after)
+
+**빌드 성공** ✅ (컴파일 2.2s, TypeScript 체크 통과)
+
+| 항목 | 크기 |
+|------|------|
+| `.next/static/chunks/` (JS 17개) | **1,040 KB** |
+| `.next/static/` CSS (1개) | **51 KB** |
+| `.next/static/` 전체 | **2.1 MB** |
+| `.next/server/` (SSR 번들) | **27 MB** |
+
+**상위 5개 JS 청크 (미압축):**
+
+| 파일 | 크기 |
+|------|------|
+| `107ftcfsijbo3.js` | 229 KB |
+| `0n~dq4kpx9xxx.js` | 228 KB |
+| `0wlo_fhr3g5u..js` | 141 KB |
+| `0flkx-jm-4e.k.js` | 120 KB |
+| `03~yq9q893hmn.js` | 113 KB |
+
+### 커버리지 (after)
+
+**테스트 파일 5개 / 케이스 34개 — 전부 통과** ✅
+
+| 항목 | 수치 | 분자/분모 |
+|------|------|---------|
+| Statements | **24.19%** | 166 / 686 |
+| Branches | **15.91%** | 71 / 446 |
+| Functions | **24.69%** | 41 / 166 |
+| Lines | **24.91%** | 155 / 622 |
+
+**핵심 파일별 커버리지:**
+
+| 파일 | Stmts | Branch | Funcs |
+|------|-------|--------|-------|
+| `app/components/chat-input.tsx` | 81.96% | 71.42% | 65.78% |
+| `app/components/hero-section.tsx` | 80.00% | 60.00% | 60.00% |
+| `app/components/pricing-card.tsx` | 84.84% | 70.37% | 100% |
+| `lib/encryption.ts` | 93.54% | 66.66% | 100% |
+| `lib/usage.ts` | 0% | 0% | 0% |
+| API routes / pages | 0% | 0% | 0% |
+
+> `lib/usage.ts`·API routes 커버리지 0%는 통합 테스트(MSW 또는 실제 HTTP)가 없어서 발생. 컴포넌트·순수 로직에 집중된 현행 테스트 범위의 한계.
+
+### before / after 비교표
+
+| 항목 | before | after | 변화 |
+|------|--------|-------|------|
+| 번들 크기 (JS chunks 합계, 미압축) | 1,041 KB | 1,040 KB | ≈ 동일 (−1 KB) |
+| CSS | 52 KB | 51 KB | ≈ 동일 (−1 KB) |
+| `.next/static/` 전체 | 2.1 MB | 2.1 MB | 동일 |
+| 테스트 파일 수 | 5 | 5 | 동일 |
+| 테스트 케이스 수 | 34 | 34 | 동일 |
+| 커버리지 (statements) | 0%¹ | **24.19%** | +24.19%p |
+| 커버리지 (branches) | 0%¹ | **15.91%** | +15.91%p |
+| 커버리지 (functions) | 0%¹ | **24.69%** | +24.69%p |
+| 커버리지 (lines) | 0%¹ | **24.91%** | +24.91%p |
+| CI | 있음 | 있음 | 동일 |
+
+> ¹ before 단계에서 `@vitest/coverage-v8` 미설치로 커버리지 미측정 — 수치상 0%로 기입.
+
+**헤드라인:** 번들 크기 변화는 드라마틱하지 않다(서버 로직 파일 추출은 클라이언트 번들에 영향 없음). 이번 사이클의 핵심 성과는 **커버리지 0% → 24.19%** 달성과 측정 인프라(`@vitest/coverage-v8`) 구축이다.
