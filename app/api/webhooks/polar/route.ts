@@ -56,6 +56,36 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 구독 취소·강제 해지 이벤트 처리
+    if (
+      event.type === 'subscription.canceled' ||
+      event.type === 'subscription.revoked'
+    ) {
+      const sub = event.data
+      const userId = sub.customer.externalId
+
+      if (userId) {
+        const newStatus =
+          event.type === 'subscription.revoked' ? 'revoked' : 'canceled'
+
+        const { error } = await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId)
+
+        if (error) {
+          console.error('Subscription status update error:', error)
+          return NextResponse.json(
+            { error: 'DB update failed' },
+            { status: 500 },
+          )
+        }
+      }
+    }
+
     return NextResponse.json({ received: true })
   } catch (error) {
     if (error instanceof WebhookVerificationError) {
