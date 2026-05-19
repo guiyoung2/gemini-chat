@@ -1,5 +1,7 @@
 # GeminiChat
 
+![CI](https://github.com/guiyoung2/gemini-chat/actions/workflows/ci.yml/badge.svg)
+
 > Google Gemini API 기반 **실시간 스트리밍 AI 채팅 + 구독 결제**가 결합된 개인 SaaS 프로젝트.
 > 가입 → 무료 플랜 → 사용량 한도 → 업그레이드 유도 → 결제 → 기능 해제까지 **서비스 흐름 전체를 직접 설계·구현**했습니다.
 
