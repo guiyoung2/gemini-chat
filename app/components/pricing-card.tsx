@@ -142,6 +142,7 @@ export default function PricingCards({
         throw new Error(data.detail ?? data.error ?? 'Checkout 생성 실패')
       }
 
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = data.url
     } catch (err) {
       console.error(err)
