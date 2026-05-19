@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks'
-import { supabaseAdmin } from '@/lib/supabase/service'
+import { getSupabaseAdmin } from '@/lib/supabase/service'
 
 // Polar 상품 ID → 플랜 이름 매핑
 function getPlanFromProductId(productId: string): string | null {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       const plan = getPlanFromProductId(sub.productId)
 
       if (userId && plan) {
-        const { error } = await supabaseAdmin.from('subscriptions').upsert(
+        const { error } = await getSupabaseAdmin().from('subscriptions').upsert(
           {
             user_id: userId,
             plan,
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         const newStatus =
           event.type === 'subscription.revoked' ? 'revoked' : 'canceled'
 
-        const { error } = await supabaseAdmin
+        const { error } = await getSupabaseAdmin()
           .from('subscriptions')
           .update({
             status: newStatus,
