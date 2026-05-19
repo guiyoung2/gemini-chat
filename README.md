@@ -25,7 +25,7 @@
 | **AI 스트리밍**     | `ReadableStream`으로 Gemini 응답을 청크 단위로 UI에 실시간 반영         |
 | **사용량 제어**     | check → call → record 3단 분리로 **API 실패 시 잘못된 차감 방지**       |
 | **결제 보안**       | Polar Webhook **서명 검증** (`validateEvent` 실패 시 403), DB 위조 차단 |
-| **데이터 보안**     | 사용자 IP를 **AES-256-GCM 앱 레벨 암호화** 후 저장                      |
+| **데이터 보안**     | IP·이메일·이름을 **AES-256-GCM 앱 레벨 암호화** 후 저장, 조회용 HMAC 해시(`email_hash`, `full_name_hash`) 별도 보관 |
 | **권한 모델**       | Supabase RLS로 사용자별 데이터 격리, Webhook은 서비스 롤로 우회 처리    |
 | **멀티턴 컨텍스트** | Gemini `history` 파라미터로 이전 대화 흐름 유지                         |
 
@@ -99,7 +99,7 @@
 
 ### 보안
 
-- **AES-256-GCM** 앱 레벨 암호화 — 사용자 IP를 DB에 평문 저장하지 않음
+- **AES-256-GCM** 앱 레벨 암호화 — IP 주소 외에도 Google OAuth 로그인 시 이메일과 이름(`full_name`)을 암호화해 저장하며, 조회용 HMAC 해시(`email_hash`, `full_name_hash`)를 별도 보관
 - Polar Webhook **서명 검증** (`WebhookVerificationError` 처리)
 - **Supabase RLS** — 본인 데이터만 접근. Webhook은 서비스 롤 클라이언트로 우회
 
@@ -195,7 +195,7 @@ lib/
 │   ├── client.ts               # anon (RLS)
 │   └── service.ts              # service role
 ├── usage.ts                    # check / call / record 분리
-└── crypto.ts                   # AES-256-GCM
+└── encryption.ts               # AES-256-GCM
 ```
 
 ---
