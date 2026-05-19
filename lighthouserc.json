@@ -1,0 +1,17 @@
+{
+  "_note": "Lighthouse CI 베이스 config. GeminiChat 배포 환경(Vercel)의 인증 불필요 공개 페이지를 측정한다.",
+  "_authenticated_pages_note": "/dashboard · /dashboard/billing은 Supabase 세션이 필요한 보호 라우트다. 자동 측정하려면 puppeteerScript로 로그인해야 하며 테스트 계정(LHCI_TEST_EMAIL / LHCI_TEST_PASSWORD) 설정이 필요하다. 현재 config는 공개 페이지만 자동 측정한다. 대시보드 측정은 step3.md의 '인증 페이지 측정 (선택)' 섹션을 참고한다.",
+  "ci": {
+    "collect": {
+      "url": [
+        "https://gemini-gy-ruby.vercel.app/",
+        "https://gemini-gy-ruby.vercel.app/pricing"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "formFactor": "mobile",
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"]
+      }
+    }
+  }
+}

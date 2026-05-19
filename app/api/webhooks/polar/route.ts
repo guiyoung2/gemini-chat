@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks'
-import { createClient } from '@supabase/supabase-js'
-
-// 서비스 롤 클라이언트 - RLS 우회해 webhook에서 DB 직접 쓰기
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-)
+import { supabaseAdmin } from '@/lib/supabase/service'
 
 // Polar 상품 ID → 플랜 이름 매핑
 function getPlanFromProductId(productId: string): string | null {
@@ -48,6 +42,36 @@ export async function POST(req: NextRequest) {
 
         if (error) {
           console.error('Subscription upsert error:', error)
+          return NextResponse.json(
+            { error: 'DB update failed' },
+            { status: 500 },
+          )
+        }
+      }
+    }
+
+    // 구독 취소·강제 해지 이벤트 처리
+    if (
+      event.type === 'subscription.canceled' ||
+      event.type === 'subscription.revoked'
+    ) {
+      const sub = event.data
+      const userId = sub.customer.externalId
+
+      if (userId) {
+        const newStatus =
+          event.type === 'subscription.revoked' ? 'revoked' : 'canceled'
+
+        const { error } = await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId)
+
+        if (error) {
+          console.error('Subscription status update error:', error)
           return NextResponse.json(
             { error: 'DB update failed' },
             { status: 500 },

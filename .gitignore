@@ -52,3 +52,10 @@ CLAUDE.md
 .mcp.json
 
 .codex
+
+# lighthouse ci
+.lighthouseci/
+lighthouserc.generated.json
+
+# bundle analyzer output
+.next/analyze/
