@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase/service'
 import { Polar } from '@polar-sh/sdk'
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
   server: (process.env.POLAR_SERVER as 'sandbox' | 'production') ?? 'production',
 })
-
-// 서비스 롤 클라이언트 - RLS 우회해 status 업데이트
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-)
 
 // 구독 기간 만료 후 취소 (즉시 해지 아님)
 export async function POST() {

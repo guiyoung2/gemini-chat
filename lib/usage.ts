@@ -1,4 +1,4 @@
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase/service'
 
 // 플랜별 월 사용량 한도 (null = 무제한)
 export const PLAN_LIMITS: Record<string, number | null> = {
@@ -21,14 +21,8 @@ export interface UsageResult {
 
 // 사용량 한도 체크 및 기록 함수 반환
 export async function checkUsage(userId: string): Promise<UsageResult> {
-  const admin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
   // 활성 구독 플랜 조회 (없으면 free)
-  const { data: sub } = await admin
+  const { data: sub } = await supabaseAdmin
     .from("subscriptions")
     .select("plan")
     .eq("user_id", userId)
@@ -40,7 +34,7 @@ export async function checkUsage(userId: string): Promise<UsageResult> {
   const month = currentMonth()
 
   // 현재 월 사용량 행 조회
-  const { data: usageRow } = await admin
+  const { data: usageRow } = await supabaseAdmin
     .from("usage")
     .select("id, count")
     .eq("user_id", userId)
@@ -60,12 +54,12 @@ export async function checkUsage(userId: string): Promise<UsageResult> {
     plan,
     record: async () => {
       if (usageRow) {
-        await admin
+        await supabaseAdmin
           .from("usage")
           .update({ count: currentCount + 1, updated_at: new Date().toISOString() })
           .eq("id", usageRow.id)
       } else {
-        await admin.from("usage").insert({ user_id: userId, month, count: 1 })
+        await supabaseAdmin.from("usage").insert({ user_id: userId, month, count: 1 })
       }
     },
   }

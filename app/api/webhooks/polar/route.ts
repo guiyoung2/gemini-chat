@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks'
-import { createClient } from '@supabase/supabase-js'
-
-// 서비스 롤 클라이언트 - RLS 우회해 webhook에서 DB 직접 쓰기
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-)
+import { supabaseAdmin } from '@/lib/supabase/service'
 
 // Polar 상품 ID → 플랜 이름 매핑
 function getPlanFromProductId(productId: string): string | null {
