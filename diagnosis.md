@@ -123,14 +123,14 @@
 
 ## 5. Lighthouse 기준선 (before)
 
-> 측정 방식: `@lhci/cli` 헤드리스 Chrome, Mobile 모드, 3회 측정 중앙값  
-> 측정 대상: 공개 페이지(자동) — 인증 페이지(`/dashboard`, `/dashboard/billing`)는 수동 측정 대기 중
+> 측정 방식: 공개 페이지 — `@lhci/cli` 헤드리스 Chrome Mobile 모드 3회 중앙값 / 인증 페이지 — Chrome DevTools Lighthouse 수동 3회 중앙값  
+> 측정 대상: 전체 4개 페이지
 
 | 페이지 | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS |
 |--------|-------------|---------------|----------------|-----|-----|-----|-----|-----|
 | / | 98 | 100 | 100 | 100 | 797 ms | 2268 ms | 19 ms | 0.000 |
 | /pricing | 98 | 96 | 100 | 100 | 825 ms | 2277 ms | 6 ms | 0.000 |
-| /dashboard | — | — | — | — | — | — | — | — |
-| /dashboard/billing | — | — | — | — | — | — | — | — |
+| /dashboard | 97 | 92 | 100 | 100 | 800 ms | 2600 ms | 50 ms | 0.000 |
+| /dashboard/billing | 94 | 95 | 100 | 100 | 800 ms | 3000 ms | 20 ms | 0.000 |
 
-_측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing`은 Chrome DevTools Lighthouse 수동 측정 후 기입 예정_
+_측정일: 2026-05-19 · 점수 0–100, 시간 ms, CLS 단위 없음 · `/dashboard`·`/dashboard/billing` 3회 측정: (94/99/97), (92/95/94) 등 — 중앙값 기입_
